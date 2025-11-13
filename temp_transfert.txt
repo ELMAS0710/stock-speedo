@@ -1,0 +1,288 @@
+﻿<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Transfert;
+use App\Models\Depot;
+use App\Models\Article;
+use App\Models\Stock;
+use App\Models\MouvementStock;
+use Illuminate\Support\Facades\DB;
+
+class TransfertController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $query = Transfert::with(['depotSource', 'depotDestination', 'createdBy', 'lignes']);
+
+        // Filtre par dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©pÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´t source
+        if ($request->filled('depot_source_id')) {
+            $query->where('depot_source_id', $request->depot_source_id);
+        }
+
+        // Filtre par dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©pÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´t destination
+        if ($request->filled('depot_destination_id')) {
+            $query->where('depot_destination_id', $request->depot_destination_id);
+        }
+
+        // Filtre par statut
+        if ($request->filled('statut')) {
+            $query->where('statut', $request->statut);
+        }
+
+        // Filtre par date dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©but
+        if ($request->filled('date_debut')) {
+            $query->whereDate('date_transfert', '>=', $request->date_debut);
+        }
+
+        // Filtre par date fin
+        if ($request->filled('date_fin')) {
+            $query->whereDate('date_transfert', '<=', $request->date_fin);
+        }
+
+        $transferts = $query->orderBy('created_at', 'desc')->get();
+        $depots = Depot::orderBy('nom')->get();
+
+        return view('transferts.index', compact('transferts', 'depots'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        $depots = Depot::orderBy('nom')->get();
+        $articles = Article::with('famille')->orderBy('nom')->get();
+        
+        return view('transferts.create', compact('depots', 'articles'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'reference' => 'required|string|max:255|unique:transferts',
+            'depot_source_id' => 'required|exists:depots,id',
+            'depot_destination_id' => 'required|exists:depots,id|different:depot_source_id',
+            'date_transfert' => 'required|date',
+            'statut' => 'required|in:en_attente,en_cours,termine,annule',
+            'notes' => 'nullable|string',
+            'lignes' => 'required|array|min:1',
+            'lignes.*.article_id' => 'required|exists:articles,id',
+            'lignes.*.quantite' => 'required|numeric|min:1',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $transfert = Transfert::create([
+                'reference' => $validated['reference'],
+                'depot_source_id' => $validated['depot_source_id'],
+                'depot_destination_id' => $validated['depot_destination_id'],
+                'date_transfert' => $validated['date_transfert'],
+                'statut' => $validated['statut'],
+                'notes' => $validated['notes'] ?? null,
+                'created_by' => auth()->id(),
+            ]);
+
+            foreach ($validated['lignes'] as $ligne) {
+                $transfert->lignes()->create([
+                    'article_id' => $ligne['article_id'],
+                    'quantite' => $ligne['quantite'],
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('transferts.show', $transfert)
+                ->with('success', 'Transfert crÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© avec succÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨s.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Erreur lors de la crÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©ation du transfert : ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Transfert $transfert)
+    {
+        $transfert->load(['depotSource', 'depotDestination', 'lignes.article', 'createdBy']);
+        
+        return view('transferts.show', compact('transfert'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Transfert $transfert)
+    {
+        if (!in_array($transfert->statut, ['brouillon', 'en_attente'])) {
+            return redirect()->route('transferts.show', $transfert)
+                ->with('error', 'Ce transfert ne peut plus ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªtre modifiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©.');
+        }
+
+        $depots = Depot::orderBy('nom')->get();
+        $articles = Article::with('famille')->orderBy('nom')->get();
+        
+        $transfert->load(['lignes.article']);
+        
+        return view('transferts.edit', compact('transfert', 'depots', 'articles'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Transfert $transfert)
+    {
+        if (!in_array($transfert->statut, ['brouillon', 'en_attente'])) {
+            return redirect()->route('transferts.show', $transfert)
+                ->with('error', 'Ce transfert ne peut plus ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªtre modifiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©.');
+        }
+
+        $validated = $request->validate([
+            'reference' => 'required|string|max:255|unique:transferts,reference,' . $transfert->id,
+            'depot_source_id' => 'required|exists:depots,id',
+            'depot_destination_id' => 'required|exists:depots,id|different:depot_source_id',
+            'date_transfert' => 'required|date',
+            'statut' => 'required|in:en_attente,en_cours,termine,annule',
+            'notes' => 'nullable|string',
+            'lignes' => 'required|array|min:1',
+            'lignes.*.article_id' => 'required|exists:articles,id',
+            'lignes.*.quantite' => 'required|numeric|min:1',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $transfert->update([
+                'reference' => $validated['reference'],
+                'depot_source_id' => $validated['depot_source_id'],
+                'depot_destination_id' => $validated['depot_destination_id'],
+                'date_transfert' => $validated['date_transfert'],
+                'statut' => $validated['statut'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            // Supprimer les anciennes lignes
+            $transfert->lignes()->delete();
+
+            // Ajouter les nouvelles lignes
+            foreach ($validated['lignes'] as $ligne) {
+                $transfert->lignes()->create([
+                    'article_id' => $ligne['article_id'],
+                    'quantite' => $ligne['quantite'],
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('transferts.show', $transfert)
+                ->with('success', 'Transfert modifiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© avec succÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨s.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Erreur lors de la modification : ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Transfert $transfert)
+    {
+        if ($transfert->statut === 'termine') {
+            return back()->with('error', 'Impossible de supprimer un transfert validÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©.');
+        }
+
+        try {
+            $transfert->lignes()->delete();
+            $transfert->delete();
+            
+            return redirect()->route('transferts.index')
+                ->with('success', 'Transfert supprimÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© avec succÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨s.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ExÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©cuter le transfert (valider et mettre ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  jour les stocks)
+     */
+    public function executer(Transfert $transfert)
+    {
+        if ($transfert->statut !== 'en_attente') {
+            return back()->with('error', 'Seuls les transferts en attente peuvent ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªtre exÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©cutÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©s.');
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($transfert->lignes as $ligne) {
+                // VÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©rifier le stock source
+                $stockSource = Stock::where('article_id', $ligne->article_id)
+                    ->where('depot_id', $transfert->depot_source_id)
+                    ->first();
+
+                if (!$stockSource || $stockSource->quantite < $ligne->quantite) {
+                    throw new \Exception("Stock insuffisant pour l'article " . $ligne->article->nom);
+                }
+
+                // DÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©crÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©menter stock source
+                $quantiteAvantSource = $stockSource->quantite;
+                $stockSource->quantite -= $ligne->quantite;
+                $stockSource->save();
+
+                // Mouvement sortie
+                MouvementStock::create([
+                    'article_id' => $ligne->article_id,
+                    'depot_id' => $transfert->depot_source_id,
+                    'type' => 'sortie_transfert',
+                    'quantite' => $ligne->quantite,
+                    'quantite_avant' => $quantiteAvantSource,
+                    'quantite_apres' => $stockSource->quantite,
+                    'reference_document' => $transfert->reference,
+                    'date_mouvement' => $transfert->date_transfert,
+                    'created_by' => auth()->id(),
+                ]);
+
+                // IncrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©menter stock destination
+                $stockDest = Stock::firstOrCreate(
+                    [
+                        'article_id' => $ligne->article_id,
+                        'depot_id' => $transfert->depot_destination_id,
+                    ],
+                    ['quantite' => 0]
+                );
+
+                $quantiteAvantDest = $stockDest->quantite;
+                $stockDest->quantite += $ligne->quantite;
+                $stockDest->save();
+
+                // Mouvement entrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©e
+                MouvementStock::create([
+                    'article_id' => $ligne->article_id,
+                    'depot_id' => $transfert->depot_destination_id,
+                    'type' => 'entree_transfert',
+                    'quantite' => $ligne->quantite,
+                    'quantite_avant' => $quantiteAvantDest,
+                    'quantite_apres' => $stockDest->quantite,
+                    'reference_document' => $transfert->reference,
+                    'date_mouvement' => $transfert->date_transfert,
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
+            $transfert->update(['statut' => 'termine']);
+
+            DB::commit();
+            return redirect()->route('transferts.show', $transfert)
+                ->with('success', 'Transfert exÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©cutÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© avec succÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨s. Les stocks ont ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©tÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© mis ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  jour.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Erreur lors de l\'exÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©cution : ' . $e->getMessage());
+        }
+    }
+}

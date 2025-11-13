@@ -1,0 +1,268 @@
+﻿@extends('layouts.main')
+
+@section('title', 'Nouveau Mouvement de Stock')
+
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-plus-circle"></i> Nouveau Mouvement de Stock</h2>
+    <a href="{{ route('mouvements-stock.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Informations du Mouvement</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('mouvements-stock.store') }}" id="mouvementForm" novalidate>
+                    @csrf
+
+                    <div class="mb-3">
+                        <label for="type_mouvement" class="form-label">Type de Mouvement <span class="text-danger">*</span></label>
+                        <select class="form-select @error('type_mouvement') is-invalid @enderror" 
+                                id="type_mouvement" name="type_mouvement" required>
+                            <option value="">-- Sélectionnez un type --</option>
+                            <option value="entree" {{ old('type_mouvement') == 'entree' ? 'selected' : '' }}>
+                                Entrée (Ajout au stock)
+                            </option>
+                            <option value="sortie" {{ old('type_mouvement') == 'sortie' ? 'selected' : '' }}>
+                                Sortie (Retrait du stock)
+                            </option>
+                        </select>
+                        @error('type_mouvement')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="article_id" class="form-label">Article <span class="text-danger">*</span></label>
+                        <select class="form-select @error('article_id') is-invalid @enderror" 
+                                id="article_id" name="article_id" required>
+                            <option value="">-- Sélectionnez un article --</option>
+                            @foreach($articles as $article)
+                                <option value="{{ $article->id }}" 
+                                        data-unite="{{ $article->unite }}"
+                                        {{ old('article_id') == $article->id ? 'selected' : '' }}>
+                                    {{ $article->reference }} - {{ $article->nom }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('article_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="depot_id" class="form-label">Dépôt <span class="text-danger">*</span></label>
+                        <select class="form-select @error('depot_id') is-invalid @enderror" 
+                                id="depot_id" name="depot_id" required>
+                            <option value="">-- Sélectionnez un dépôt --</option>
+                            @foreach($depots as $depot)
+                                <option value="{{ $depot->id }}" {{ old('depot_id') == $depot->id ? 'selected' : '' }}>
+                                    {{ $depot->nom }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('depot_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="mt-2" id="stockActuel" style="display: none;">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle"></i> Stock actuel: <strong id="stockQuantite">-</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6" id="quantiteGroup">
+                            <div class="mb-3">
+                                <label for="quantite" class="form-label">
+                                    <span id="quantiteLabel">Quantité</span> <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" 
+                                       class="form-control @error('quantite') is-invalid @enderror" 
+                                       id="quantite" 
+                                       name="quantite" 
+                                       step="1" 
+                                       min="1"
+                                       value="{{ old('quantite') }}">
+                                @error('quantite')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6" id="nouvelleQuantiteGroup" style="display: none;">
+                            <div class="mb-3">
+                                <label for="nouvelle_quantite" class="form-label">
+                                    Nouvelle Quantité <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" 
+                                       class="form-control @error('nouvelle_quantite') is-invalid @enderror" 
+                                       id="nouvelle_quantite" 
+                                       name="nouvelle_quantite" 
+                                       step="0.01" 
+                                       min="0"
+                                       value="{{ old('nouvelle_quantite') }}">
+                                <small class="text-muted">Saisir la quantité réelle après inventaire</small>
+                                @error('nouvelle_quantite')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="motif" class="form-label">Motif / Commentaire</label>
+                        <textarea class="form-control @error('motif') is-invalid @enderror" 
+                                  id="motif" 
+                                  name="motif" 
+                                  rows="3">{{ old('motif') }}</textarea>
+                        @error('motif')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer le Mouvement
+                        </button>
+                        <a href="{{ route('mouvements-stock.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-question-circle"></i> Aide</h5>
+            </div>
+            <div class="card-body">
+                <h6><i class="bi bi-arrow-down-circle text-success"></i> Entrée</h6>
+                <p class="small">Utilisez ce type pour ajouter du stock (réception de marchandises, retour client, etc.)</p>
+
+                <h6><i class="bi bi-arrow-up-circle text-danger"></i> Sortie</h6>
+                <p class="small">Utilisez ce type pour retirer du stock (vente, casse, perte, etc.)</p>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+$(document).ready(function() {
+    console.log('Script chargé');
+    
+    // Gestion du type de mouvement
+    $('#type_mouvement').change(function() {
+        const type = $(this).val();
+        console.log('Type changé:', type);
+        
+        // Changer le label selon le type
+        if (type === 'entree') {
+            $('#quantiteLabel').text('Quantité à ajouter');
+        } else if (type === 'sortie') {
+            $('#quantiteLabel').text('Quantité à retirer');
+        } else {
+            $('#quantiteLabel').text('Quantité');
+        }
+    });
+
+    // Chargement du stock actuel
+    function loadStock() {
+        const articleId = $('#article_id').val();
+        const depotId = $('#depot_id').val();
+
+        if (articleId && depotId) {
+            console.log('Chargement stock pour article:', articleId, 'depot:', depotId);
+            $.ajax({
+                url: '/api/stock-actuel',
+                method: 'GET',
+                data: {
+                    article_id: articleId,
+                    depot_id: depotId
+                },
+                success: function(response) {
+                    console.log('Stock reçu:', response);
+                    const unite = response.unite || 'Pièce';
+                    $('#stockQuantite').text(response.quantite + ' ' + unite);
+                    $('#stockActuel').show();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur chargement stock:', error);
+                    $('#stockActuel').hide();
+                }
+            });
+        } else {
+            $('#stockActuel').hide();
+        }
+    }
+
+    $('#article_id, #depot_id').change(loadStock);
+
+    // Validation du formulaire
+    $('#mouvementForm').submit(function(e) {
+        console.log('Formulaire soumis');
+        const type = $('#type_mouvement').val();
+        
+        // Vérifier que les champs requis sont remplis
+        if (!type) {
+            alert('Veuillez sélectionner un type de mouvement');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#article_id').val()) {
+            alert('Veuillez sélectionner un article');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#depot_id').val()) {
+            alert('Veuillez sélectionner un dépôt');
+            e.preventDefault();
+            return false;
+        }
+        
+        // Vérifier la quantité
+        const quantite = parseFloat($('#quantite').val());
+        console.log('Quantité:', quantite);
+        if (isNaN(quantite) || quantite <= 0) {
+            alert('Veuillez saisir une quantité valide (> 0)');
+            e.preventDefault();
+            return false;
+        }
+        
+        // Avertissement pour les sorties
+        if (type === 'sortie') {
+            const stockActuel = parseFloat($('#stockQuantite').text());
+            if (!isNaN(stockActuel) && quantite > stockActuel) {
+                if (!confirm('La quantité à sortir (' + quantite + ') est supérieure au stock disponible (' + stockActuel + '). Voulez-vous continuer ?')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        }
+        
+        console.log('Formulaire valide, soumission en cours...');
+        // Si tout est OK, on soumet le formulaire
+        return true;
+    });
+});
+</script>
+@endsection
+
