@@ -1,8 +1,8 @@
+@extends('layouts.main')
 
+@section('title', 'Nouveau Transfert')
 
-<?php $__env->startSection('title', 'Nouveau Transfert'); ?>
-
-<?php $__env->startSection('content'); ?>
+@section('content')
 <div class="container-fluid">
     <!-- En-tête avec breadcrumb -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -12,20 +12,20 @@
             </h1>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="<?php echo e(route('home')); ?>"><i class="fas fa-home"></i> Accueil</a></li>
-                    <li class="breadcrumb-item"><a href="<?php echo e(route('transferts.index')); ?>">Transferts</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i> Accueil</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('transferts.index') }}">Transferts</a></li>
                     <li class="breadcrumb-item active">Nouveau</li>
                 </ol>
             </nav>
         </div>
         <div>
-            <a href="<?php echo e(route('transferts.index')); ?>" class="btn btn-outline-secondary">
+            <a href="{{ route('transferts.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Retour à la liste
             </a>
         </div>
     </div>
 
-    <?php if($errors->any()): ?>
+    @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show shadow-sm">
             <div class="d-flex align-items-start">
                 <i class="fas fa-exclamation-triangle fa-2x me-3 mt-1"></i>
@@ -33,15 +33,15 @@
                     <h5 class="alert-heading mb-2">Erreurs de validation</h5>
                     <p class="mb-2">Veuillez corriger les erreurs suivantes :</p>
                     <ul class="mb-0">
-                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <li><?php echo e($error); ?></li>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
                     </ul>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </div>
-    <?php endif; ?>
+    @endif
 
     <!-- Instructions -->
     <div class="alert alert-info alert-dismissible fade show shadow-sm mb-4">
@@ -61,8 +61,8 @@
         </div>
     </div>
 
-    <form action="<?php echo e(route('transferts.store')); ?>" method="POST" id="transfertForm">
-        <?php echo csrf_field(); ?>
+    <form action="{{ route('transferts.store') }}" method="POST" id="transfertForm">
+        @csrf
         
         <div class="row">
             <!-- Informations générales -->
@@ -83,29 +83,15 @@
                                     <i class="fas fa-hashtag"></i>
                                 </span>
                                 <input type="text" 
-                                       class="form-control <?php $__errorArgs = ['reference'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" 
+                                       class="form-control @error('reference') is-invalid @enderror" 
                                        id="reference" 
                                        name="reference" 
-                                       value="<?php echo e(old('reference', 'TRF-' . date('YmdHis'))); ?>" 
+                                       value="{{ old('reference', 'TRF-' . date('YmdHis')) }}" 
                                        required
                                        placeholder="Ex: TRF-20250111-001">
-                                <?php $__errorArgs = ['reference'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
-                                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                                @error('reference')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             <small class="text-muted">
                                 <i class="fas fa-lightbulb"></i> Référence unique du transfert
@@ -121,28 +107,14 @@ unset($__errorArgs, $__bag); ?>
                                     <i class="fas fa-calendar-day"></i>
                                 </span>
                                 <input type="date" 
-                                       class="form-control <?php $__errorArgs = ['date_transfert'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" 
+                                       class="form-control @error('date_transfert') is-invalid @enderror" 
                                        id="date_transfert" 
                                        name="date_transfert" 
-                                       value="<?php echo e(old('date_transfert', date('Y-m-d'))); ?>" 
+                                       value="{{ old('date_transfert', date('Y-m-d')) }}" 
                                        required>
-                                <?php $__errorArgs = ['date_transfert'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
-                                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                                @error('date_transfert')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -154,34 +126,20 @@ unset($__errorArgs, $__bag); ?>
                                 <span class="input-group-text bg-light">
                                     <i class="fas fa-tasks"></i>
                                 </span>
-                                <select class="form-select <?php $__errorArgs = ['statut'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" 
+                                <select class="form-select @error('statut') is-invalid @enderror" 
                                         id="statut" 
                                         name="statut" 
                                         required>
-                                    <option value="en_attente" <?php echo e(old('statut', 'en_attente') === 'en_attente' ? 'selected' : ''); ?>>
+                                    <option value="en_attente" {{ old('statut', 'en_attente') === 'en_attente' ? 'selected' : '' }}>
                                         🟡 En Attente
                                     </option>
-                                    <option value="en_cours" <?php echo e(old('statut') === 'en_cours' ? 'selected' : ''); ?>>
+                                    <option value="en_cours" {{ old('statut') === 'en_cours' ? 'selected' : '' }}>
                                         🔵 En Cours
                                     </option>
                                 </select>
-                                <?php $__errorArgs = ['statut'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
-                                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                                @error('statut')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -205,35 +163,20 @@ unset($__errorArgs, $__bag); ?>
                                 <span class="input-group-text bg-danger bg-opacity-10">
                                     <i class="fas fa-warehouse text-danger"></i>
                                 </span>
-                                <select class="form-select <?php $__errorArgs = ['depot_source_id'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" 
+                                <select class="form-select @error('depot_source_id') is-invalid @enderror" 
                                         id="depot_source_id" 
                                         name="depot_source_id" 
                                         required>
                                     <option value="">-- Choisir le dépôt source --</option>
-                                    <?php $__currentLoopData = $depots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $depot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($depot->id); ?>" <?php echo e(old('depot_source_id') == $depot->id ? 'selected' : ''); ?>>
-                                            📦 <?php echo e($depot->nom); ?>
-
+                                    @foreach($depots as $depot)
+                                        <option value="{{ $depot->id }}" {{ old('depot_source_id') == $depot->id ? 'selected' : '' }}>
+                                            📦 {{ $depot->nom }}
                                         </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    @endforeach
                                 </select>
-                                <?php $__errorArgs = ['depot_source_id'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
-                                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                                @error('depot_source_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             <small class="text-muted">
                                 <i class="fas fa-arrow-up"></i> D'où proviennent les articles
@@ -252,35 +195,20 @@ unset($__errorArgs, $__bag); ?>
                                 <span class="input-group-text bg-success bg-opacity-10">
                                     <i class="fas fa-warehouse text-success"></i>
                                 </span>
-                                <select class="form-select <?php $__errorArgs = ['depot_destination_id'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" 
+                                <select class="form-select @error('depot_destination_id') is-invalid @enderror" 
                                         id="depot_destination_id" 
                                         name="depot_destination_id" 
                                         required>
                                     <option value="">-- Choisir le dépôt destination --</option>
-                                    <?php $__currentLoopData = $depots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $depot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($depot->id); ?>" <?php echo e(old('depot_destination_id') == $depot->id ? 'selected' : ''); ?>>
-                                            📦 <?php echo e($depot->nom); ?>
-
+                                    @foreach($depots as $depot)
+                                        <option value="{{ $depot->id }}" {{ old('depot_destination_id') == $depot->id ? 'selected' : '' }}>
+                                            📦 {{ $depot->nom }}
                                         </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    @endforeach
                                 </select>
-                                <?php $__errorArgs = ['depot_destination_id'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
-                                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                                @error('depot_destination_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             <small class="text-muted">
                                 <i class="fas fa-arrow-down"></i> Où vont les articles
@@ -311,28 +239,14 @@ unset($__errorArgs, $__bag); ?>
                     <span class="input-group-text bg-light">
                         <i class="fas fa-comment-alt"></i>
                     </span>
-                    <textarea class="form-control <?php $__errorArgs = ['notes'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" 
+                    <textarea class="form-control @error('notes') is-invalid @enderror" 
                               id="notes" 
                               name="notes" 
                               rows="3" 
-                              placeholder="Ajoutez des notes ou commentaires sur ce transfert (motif, observations, etc.)..."><?php echo e(old('notes')); ?></textarea>
-                    <?php $__errorArgs = ['notes'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <div class="invalid-feedback"><?php echo e($message); ?></div>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                              placeholder="Ajoutez des notes ou commentaires sur ce transfert (motif, observations, etc.)...">{{ old('notes') }}</textarea>
+                    @error('notes')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
         </div>
@@ -373,21 +287,21 @@ unset($__errorArgs, $__bag); ?>
                             </tr>
                         </thead>
                         <tbody id="lignesContainer">
-                            <?php if(old('lignes')): ?>
-                                <?php $__currentLoopData = old('lignes'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $ligne): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <tr class="ligne-row" data-index="<?php echo e($index); ?>">
+                            @if(old('lignes'))
+                                @foreach(old('lignes') as $index => $ligne)
+                                    <tr class="ligne-row" data-index="{{ $index }}">
                                         <td>
                                             <select class="form-select form-select-sm article-select" 
-                                                    name="lignes[<?php echo e($index); ?>][article_id]" 
+                                                    name="lignes[{{ $index }}][article_id]" 
                                                     required>
                                                 <option value="">-- Sélectionner --</option>
-                                                <?php $__currentLoopData = $articles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $article): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($article->id); ?>" 
-                                                            data-reference="<?php echo e($article->reference); ?>"
-                                                            <?php echo e($ligne['article_id'] == $article->id ? 'selected' : ''); ?>>
-                                                        <?php echo e($article->nom); ?> (<?php echo e($article->reference); ?>)
+                                                @foreach($articles as $article)
+                                                    <option value="{{ $article->id }}" 
+                                                            data-reference="{{ $article->reference }}"
+                                                            {{ $ligne['article_id'] == $article->id ? 'selected' : '' }}>
+                                                        {{ $article->nom }} ({{ $article->reference }})
                                                     </option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                @endforeach
                                             </select>
                                         </td>
                                         <td>
@@ -396,8 +310,8 @@ unset($__errorArgs, $__bag); ?>
                                         <td>
                                             <input type="number" 
                                                    class="form-control form-control-sm quantite-input" 
-                                                   name="lignes[<?php echo e($index); ?>][quantite]" 
-                                                   value="<?php echo e($ligne['quantite']); ?>"
+                                                   name="lignes[{{ $index }}][quantite]" 
+                                                   value="{{ $ligne['quantite'] }}"
                                                    min="1" 
                                                    required>
                                         </td>
@@ -410,8 +324,8 @@ unset($__errorArgs, $__bag); ?>
                                             </button>
                                         </td>
                                     </tr>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            <?php else: ?>
+                                @endforeach
+                            @else
                                 <tr id="emptyState">
                                     <td colspan="6" class="text-center py-5">
                                         <i class="fas fa-inbox fa-4x mb-3 text-secondary opacity-50"></i>
@@ -425,7 +339,7 @@ unset($__errorArgs, $__bag); ?>
                                         </p>
                                     </td>
                                 </tr>
-                            <?php endif; ?>
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -436,7 +350,7 @@ unset($__errorArgs, $__bag); ?>
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center">
-                    <a href="<?php echo e(route('transferts.index')); ?>" class="btn btn-lg btn-outline-secondary px-4">
+                    <a href="{{ route('transferts.index') }}" class="btn btn-lg btn-outline-secondary px-4">
                         <i class="fas fa-arrow-left me-2"></i> Retour à la Liste
                     </a>
                     <div class="d-flex gap-3">
@@ -459,9 +373,9 @@ unset($__errorArgs, $__bag); ?>
     </form>
 </div>
 
-<?php $__env->startPush('scripts'); ?>
+@push('scripts')
 <script>
-let ligneIndex = <?php echo e(old('lignes') ? count(old('lignes')) : 0); ?>;
+let ligneIndex = {{ old('lignes') ? count(old('lignes')) : 0 }};
 
 // Ajouter une nouvelle ligne
 document.getElementById('addLigne').addEventListener('click', function() {
@@ -483,11 +397,11 @@ document.getElementById('addLigne').addEventListener('click', function() {
         <td>
             <select class="form-select form-select-sm article-select" name="lignes[${ligneIndex}][article_id]" required>
                 <option value="">-- Sélectionner un article --</option>
-                <?php $__currentLoopData = $articles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $article): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($article->id); ?>" data-reference="<?php echo e($article->reference); ?>">
-                        📦 <?php echo e($article->nom); ?> (<?php echo e($article->reference); ?>)
+                @foreach($articles as $article)
+                    <option value="{{ $article->id }}" data-reference="{{ $article->reference }}">
+                        📦 {{ $article->nom }} ({{ $article->reference }})
                     </option>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                @endforeach
             </select>
         </td>
         <td class="text-center align-middle">
@@ -751,7 +665,5 @@ document.getElementById('transfertForm').addEventListener('submit', function(e) 
     }
 });
 </script>
-<?php $__env->stopPush(); ?>
-<?php $__env->stopSection(); ?>
-
-<?php echo $__env->make('layouts.main', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\GESTION STOCK\gestion_stock_speedo\resources\views/transferts/create.blade.php ENDPATH**/ ?>
+@endpush
+@endsection

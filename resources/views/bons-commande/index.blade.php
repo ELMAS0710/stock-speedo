@@ -137,7 +137,7 @@ $(document).ready(function() {
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json"
         },
-        "order": [[2, "desc"]],
+        "ordering": false,  // Désactiver complètement le tri
         "pageLength": 25
     });
 });

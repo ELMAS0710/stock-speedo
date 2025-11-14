@@ -106,17 +106,17 @@
         <div class="card-body p-0">
             @if($mouvements->count() > 0)
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0" style="cursor: default;">
                         <thead class="table-light">
                             <tr>
-                                <th class="text-center"><i class="fas fa-calendar"></i> Date</th>
-                                <th><i class="fas fa-tag"></i> Type</th>
-                                <th><i class="fas fa-box"></i> Article</th>
-                                <th><i class="fas fa-warehouse"></i> Dépôt</th>
-                                <th class="text-center"><i class="fas fa-sort-numeric-up"></i> Quantité</th>
-                                <th class="text-center"><i class="fas fa-boxes"></i> Stock Actuel</th>
-                                <th><i class="fas fa-user"></i> Utilisateur</th>
-                                <th><i class="fas fa-comment-dots"></i> Motif</th>
+                                <th class="text-center" style="user-select: none; pointer-events: none;"><i class="fas fa-calendar"></i> Date</th>
+                                <th style="user-select: none; pointer-events: none;"><i class="fas fa-tag"></i> Type</th>
+                                <th style="user-select: none; pointer-events: none;"><i class="fas fa-box"></i> Article</th>
+                                <th style="user-select: none; pointer-events: none;"><i class="fas fa-warehouse"></i> Dépôt</th>
+                                <th class="text-center" style="user-select: none; pointer-events: none;"><i class="fas fa-sort-numeric-up"></i> Quantité</th>
+                                <th class="text-center" style="user-select: none; pointer-events: none;"><i class="fas fa-boxes"></i> Stock Actuel</th>
+                                <th style="user-select: none; pointer-events: none;"><i class="fas fa-user"></i> Utilisateur</th>
+                                <th style="user-select: none; pointer-events: none;"><i class="fas fa-comment-dots"></i> Motif</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -129,31 +129,13 @@
                                         </small>
                                     </td>
                                     <td class="align-middle">
-                                        @php
-                                            $isTransfert = $mouvement->reference_document && str_starts_with($mouvement->reference_document, 'TR');
-                                            $isEntree = $mouvement->quantite > 0;
-                                            $isSortie = $mouvement->quantite < 0;
-                                        @endphp
-                                        
-                                        @if($isEntree && $isTransfert)
-                                            <span class="badge bg-info">
-                                                <i class="fas fa-exchange-alt"></i> Transfert Entrée
-                                            </span>
-                                        @elseif($isSortie && $isTransfert)
-                                            <span class="badge bg-warning text-dark">
-                                                <i class="fas fa-exchange-alt"></i> Transfert Sortie
-                                            </span>
-                                        @elseif($isEntree)
+                                        @if($mouvement->quantite > 0)
                                             <span class="badge bg-success">
                                                 <i class="fas fa-arrow-down"></i> Entrée
                                             </span>
-                                        @elseif($isSortie)
+                                        @else
                                             <span class="badge bg-danger">
                                                 <i class="fas fa-arrow-up"></i> Sortie
-                                            </span>
-                                        @else
-                                            <span class="badge bg-secondary">
-                                                <i class="fas fa-question"></i> Non défini
                                             </span>
                                         @endif
                                     </td>
