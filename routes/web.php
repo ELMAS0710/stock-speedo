@@ -115,6 +115,34 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/home', [DashboardController::class, 'index'])->name('home');
+    
+    // Route DEBUG pour tester le dashboard
+    Route::get('/dashboard-debug', function() {
+        $totalClients = \App\Models\Client::where('is_active', true)->count();
+        $totalBonsLivraison = \App\Models\BonLivraison::count();
+        $devisValides = \App\Models\Devis::where('statut', 'valide')->count();
+        $devisTotal = \App\Models\Devis::count();
+        $stockParDepot = \App\Models\Depot::withSum('stocks', 'quantite')->where('is_active', true)->get();
+        $articlesPlusSortis = \App\Models\MouvementStock::select('article_id', \DB::raw('ABS(SUM(quantite)) as total_sortie'))
+            ->where('quantite', '<', 0)
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('article_id')
+            ->orderByDesc('total_sortie')
+            ->with('article')
+            ->limit(10)
+            ->get();
+        $stockTotal = \App\Models\Stock::sum('quantite');
+        $derniersMouvements = \App\Models\MouvementStock::select('*')
+            ->with(['article', 'depot', 'createdBy'])
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+        
+        return view('dashboard-debug', compact(
+            'totalClients', 'totalBonsLivraison', 'devisValides', 'devisTotal',
+            'stockParDepot', 'articlesPlusSortis', 'stockTotal', 'derniersMouvements'
+        ));
+    })->name('dashboard.debug');
 
     // Clients
     Route::resource('clients', ClientController::class);

@@ -48,7 +48,7 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return view('dashboard', compact(
+        return view('dashboard-new', compact(
             'totalClients',
             'totalBonsLivraison',
             'devisValides',
