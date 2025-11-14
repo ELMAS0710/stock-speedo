@@ -29,8 +29,8 @@ class DashboardController extends Controller
             ->get();
 
         // Articles les plus sortis (derniers 30 jours)
-        $articlesPlusSortis = MouvementStock::select('article_id', DB::raw('SUM(quantite) as total_sortie'))
-            ->whereIn('type', ['sortie', 'transfert_sortie'])
+        $articlesPlusSortis = MouvementStock::select('article_id', DB::raw('ABS(SUM(quantite)) as total_sortie'))
+            ->where('quantite', '<', 0)
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('article_id')
             ->orderByDesc('total_sortie')
@@ -42,7 +42,8 @@ class DashboardController extends Controller
         $stockTotal = Stock::sum('quantite');
 
         // Derniers mouvements
-        $derniersMouvements = MouvementStock::with(['article', 'depot', 'createdBy'])
+        $derniersMouvements = MouvementStock::select('*')
+            ->with(['article', 'depot', 'createdBy'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();

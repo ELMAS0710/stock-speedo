@@ -15,8 +15,6 @@ class Stock extends Model
         'article_id',
         'depot_id',
         'quantite',
-        'stock_min',
-        'stock_max',
     ];
 
     public function article()

@@ -80,12 +80,12 @@ class MouvementStockController extends Controller
             );
 
             $quantiteAvant = $stock->quantite;
-            $quantiteMouvement = $validated['quantite']; // Quantité du mouvement
             
             if ($validated['type_mouvement'] === 'entree') {
                 // Ajout au stock
                 $stock->quantite += $validated['quantite'];
                 $type = 'entree';
+                $quantiteMouvement = $validated['quantite']; // Quantité positive pour entrée
             } else {
                 // Retrait du stock - vérifier la disponibilité
                 if ($stock->quantite < $validated['quantite']) {
@@ -93,6 +93,7 @@ class MouvementStockController extends Controller
                 }
                 $stock->quantite -= $validated['quantite'];
                 $type = 'sortie';
+                $quantiteMouvement = -$validated['quantite']; // Quantité négative pour sortie
             }
 
             $stock->save();
